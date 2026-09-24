@@ -25,15 +25,32 @@ MEMBER   ── completes task ───▶ MANAGER  ── receives email notif
 
 ## Current Architecture
 
-The current version is a monolithic Spring Boot application using internal Spring events to decouple task operations from notification processing.
+The current version is a monolithic Spring Boot application using Apache Kafka to decouple task operations from notification processing.
 
 ```text
-TaskService ──▶ Spring Event ──▶ NotificationEventHandler ──▶ NotificationService ──▶ EmailSender ──▶ SMTP
+TaskService
+    │
+    ▼
+TaskEventProducer
+    │
+    ▼
+Kafka ── task-events
+    │
+    ▼
+NotificationConsumer
+    │
+    ▼
+NotificationService
+    │
+    ▼
+EmailSender ──▶ SMTP
 ```
 
-`TaskService` no longer triggers notifications directly. Events represent domain facts such as task assignment and completion and carry the data required by the notification flow, allowing the notification layer to react without directly depending on the task domain.
+`TaskService` publishes events representing domain facts such as task assignment and completion. These events carry the data required by the notification flow and are published to Kafka without directly invoking the notification layer.
 
-Event handling is still synchronous and runs within the same application, establishing the event-driven flow before external messaging and asynchronous processing are introduced.
+`NotificationConsumer` consumes the events asynchronously and delegates notification processing to `NotificationService`.
+
+This separates task operations from notification delivery while keeping both domains inside the same application, preparing the project for further reliability improvements and eventual service separation.
 
 ## Technologies
 
@@ -50,20 +67,25 @@ Event handling is still synchronous and runs within the same application, establ
 - Hibernate
 - PostgreSQL
 
-### Events and Notifications
+### Messaging and Notifications
 
-- Spring Application Events
+- Apache Kafka
+- Spring Kafka
 - Spring Mail
 - SMTP
 
 ### Tools
 
 - Maven
+- Docker
+- Docker Compose
 
 ## Project Direction
 
-Notiflow evolves incrementally from an event-driven monolith toward more decoupled and resilient processing.
+Notiflow evolves incrementally from a simple backend flow toward more decoupled and resilient processing.
 
-Future stages will explore external messaging, asynchronous consumers, reliability mechanisms, and service separation as these needs emerge from the architecture.
+The current architecture introduces asynchronous communication through Kafka while remaining a monolithic application.
+
+Future stages will explore reliability mechanisms such as retry, idempotency and failure handling, followed by gradual service separation as these needs emerge from the architecture.
 
 The domain remains intentionally small so the focus stays on technical decisions and system evolution.

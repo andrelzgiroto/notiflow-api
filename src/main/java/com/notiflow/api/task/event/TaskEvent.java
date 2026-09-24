@@ -22,5 +22,5 @@ public record TaskEvent(
         String assignedToName,
 
         Instant occurredAt
-) {
+){
 }

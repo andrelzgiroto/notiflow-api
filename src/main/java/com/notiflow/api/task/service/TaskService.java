@@ -2,6 +2,7 @@ package com.notiflow.api.task.service;
 
 import com.notiflow.api.task.dto.CreateTaskRequest;
 import com.notiflow.api.task.event.TaskEventMapper;
+import com.notiflow.api.task.event.TaskEventProducer;
 import com.notiflow.api.task.event.TaskEventType;
 import com.notiflow.api.task.exception.InvalidTaskAssignmentException;
 import com.notiflow.api.task.exception.TaskNotFoundException;
@@ -13,7 +14,6 @@ import com.notiflow.api.user.model.UserRole;
 import com.notiflow.api.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Service
 public class TaskService {
 
-    private final ApplicationEventPublisher eventPublisher;
+    private final TaskEventProducer taskEventProducer;
 
     private final UserService userService;
 
@@ -57,7 +57,7 @@ public class TaskService {
         Task task = taskRepository.save(TaskMapper.toEntity(createTaskRequest, assignedBy, assignedTo));
         log.info("Task successfully created: taskId={}", task.getId());
 
-        eventPublisher.publishEvent(TaskEventMapper.toEvent(task, TaskEventType.ASSIGNED));
+        taskEventProducer.publish(TaskEventMapper.toEvent(task, TaskEventType.ASSIGNED));
 
         return task;
     }
@@ -81,7 +81,7 @@ public class TaskService {
         Task updatedTask = taskRepository.save(task);
         log.info("Task completed: taskId={}", updatedTask.getId());
 
-        eventPublisher.publishEvent(TaskEventMapper.toEvent(task, TaskEventType.COMPLETED));
+        taskEventProducer.publish(TaskEventMapper.toEvent(task, TaskEventType.COMPLETED));
 
         return updatedTask;
     }

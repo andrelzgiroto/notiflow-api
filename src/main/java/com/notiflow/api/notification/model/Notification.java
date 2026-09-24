@@ -1,7 +1,5 @@
 package com.notiflow.api.notification.model;
 
-import com.notiflow.api.task.model.Task;
-import com.notiflow.api.user.model.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
